@@ -11,7 +11,7 @@ import {getAuth} from "firebase-admin/auth";
 // Import User schema from the specified path
 import User from './Schema/User.js';
 import e from 'express';
-
+import aws from "aws-sdk";
 const server = express();
 const PORT = 3000;
 
@@ -31,6 +31,29 @@ admin.initializeApp({
 mongoose.connect(process.env.DB_LOCATION, {
     autoIndex: true
 });
+
+//setting up the bucket
+const s3= new aws.S3({
+    region:'ap-south-1',
+    accessKeyId: process.env.AWS_ACCESS_KEY  ,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+})
+
+
+const generateUploadUrl =async ()=>{
+
+    const date =new Date();
+    const imageName = `${nanoid()}-${date.getTime()}.jpeg`;
+    return await s3.getSignedUrlPromise('putObject',{
+        Bucket:"react-blog-website",
+        Key: imageName,
+        Expires: 1000,
+        ContentType: "image/jpeg"
+    })
+
+}
+
+
 
 const formatDataToSend = (user) => {
     // Create an access token using JWT with the user's ID and a secret access key
@@ -59,7 +82,13 @@ const generateUsername = async (email) => {
 };
 
 
-
+server.get('/get-upload-url', (req,res) =>{
+    generateUploadUrl().then(url =>res.status(200).json({uploadURL: url}))
+    .catch(err =>{
+        console.log(err.message);
+        return res.status(500).json({error: err.message})
+    })
+})
 
 
 // Endpoint for user signup

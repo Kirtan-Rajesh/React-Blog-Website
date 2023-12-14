@@ -1,8 +1,10 @@
-POST http://localhost:3000/signup
-Content-Type: application/json
+# POST http://localhost:3000/signup
+# Content-Type: application/json
 
-{
-    "fullname":"kirtan",
-   "email":"kirtan@gmail.com",
-    "password":"krirtna"
-}
+# {
+#     "fullname":"kirtan",
+#    "email":"kirtan@gmail.com",
+#     "password":"krirtna"
+# }
+
+GET http://localhost:3000/get-upload-url
