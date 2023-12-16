@@ -14,7 +14,7 @@ import e from 'express';
 import aws from "aws-sdk";
 const server = express();
 const PORT = 3000;
-
+import Blog from "../server/Schema/Blog.js";
 
 // Regular expressions for email and password validation
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
@@ -31,6 +31,24 @@ admin.initializeApp({
 mongoose.connect(process.env.DB_LOCATION, {
     autoIndex: true
 });
+
+
+const verifyJWT =(req, res, next) =>{
+    const authHeader = req.headers['authorization'];
+    const token= authHeader && authHeader.split(" ")[1];
+
+    if(token == null){
+        return res.status(401).json({error: "NO access token"})
+    }
+        jwt.verify(token, process.env.SECRET_ACCESS_KEY, (err, user)=>{
+            if(err){
+                return res.status(403).json({error: "Access token is invalid" })
+            }
+
+            req.user =user.id;
+            next()
+        })
+}
 
 //setting up the bucket
 const s3= new aws.S3({
@@ -218,6 +236,62 @@ server.post("/google-auth", async(req,res)=>{
         return res.status(500).json({"error":"Failed to authenticate you with google. Try with another account."})
     })
     
+})
+
+server.post('/create-blog', verifyJWT ,(req,res) =>{
+        let authorId =req.user;
+
+        let {title,des,banner,tags,content,draft}= req.body;
+        
+        if(!title.length){
+            return res.status(403).json({error:"You must provide a title to continue "});
+        }
+        if(!draft){
+            if(!des.length){
+                return res.status(403).json({error:'Please add a description for your post'});
+            }
+    
+            if(!banner.length){
+                return res.status(403).json({error: "You must provide blog banner to publish it"});
+            }
+    
+            if(!content.blocks.length){
+                return res.status(403).json({error:"Content is empty! Please write something."});
+                
+            }
+            if(!tags.length || tags.length>10){
+                return res.status(403).json({error:`Tags should be between 1 and 10`});
+            }
+
+        }
+
+
+        tags = tags.map(tag => tag.toLowerCase());
+
+        let blog_id = title.replace(/[^a-zA-Z0-9]/g,' ').replace(/\s+/g,"-").trim() + nanoid();
+        console.log(blog_id);
+
+        let blog= new Blog({
+            title, des, banner, tags, author: authorId, blog_id, draft: Boolean(draft)
+
+        })
+
+        blog.save().then(blog =>{
+            let incrementVal = draft ? 0:1;
+
+            User.findOneAndUpdate({_id: authorId},{ $inc:{ "account_info.total_posts" :incrementVal}, $push:{"blogs": blog._id } })
+            .then(user =>{
+                return res.status(200).json({id: blog.blog_id})
+            })
+            .catch(err=>{
+                return res.status(500).json({ error: "Failed to update total posts number"})
+            })
+        })
+        .catch(err=>{
+            return res.status(500).json({ error: err.message });
+        })
+
+
 })
 
 // Start the server and listen on the specified port
