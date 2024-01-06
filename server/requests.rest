@@ -10,16 +10,23 @@
 # }
 
 
-POST http://localhost:3000/create-blog
+# POST http://localhost:3000/create-blog
+# Content-Type: application/json
+# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1N2Q3YjkwZWQ5MDYyZjQ2ODYwY2YxNSIsImlhdCI6MTcwMjcyMjQ0OH0.WWdBBNqGe0dXhzH_WAPxAmVZYwzcqpJtu_NahKkcJYE 
+
+# {
+#     "title":"test title",
+#     "banner":"https://example.com/image-url",
+#     "des":"tjis sodvnldjnsfv;ofnslcs",
+#     "content":{
+#         "blocks":[1,2]
+#     },
+#     "tags":["tag  1","tag 2"]
+# }
+
+POST http://localhost:3000/search-blogs
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1N2Q3YjkwZWQ5MDYyZjQ2ODYwY2YxNSIsImlhdCI6MTcwMjcyMjQ0OH0.WWdBBNqGe0dXhzH_WAPxAmVZYwzcqpJtu_NahKkcJYE 
 
 {
-    "title":"test title",
-    "banner":"https://example.com/image-url",
-    "des":"tjis sodvnldjnsfv;ofnslcs",
-    "content":{
-        "blocks":[1,2]
-    },
-    "tags":["tag  1","tag 2"]
+    "tag": "world"
 }
